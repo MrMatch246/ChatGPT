@@ -197,6 +197,14 @@ class Chatbot:
         self.add_to_conversation(prompt, "user", convo_id=convo_id)
         self.__truncate_conversation(convo_id=convo_id)
         # Get response
+        full_response = None
+        if self.reply_count > 1:
+            full_response = {}
+            for i in range(self.reply_count):
+                full_response[i] = ""
+        else:
+            full_response = ""
+
         if os.environ.get("API_URL") and os.environ.get("MODEL_NAME"):
             # https://learn.microsoft.com/en-us/azure/cognitive-services/openai/chatgpt-quickstart?tabs=command-line&pivots=rest-api
             url = (
@@ -245,7 +253,6 @@ class Chatbot:
                 f"{response.status_code} {response.reason} {response.text}",
             )
         response_role: str or None = None
-        full_response: str = ""
         for line in response.iter_lines():
             if not line:
                 continue
@@ -257,16 +264,21 @@ class Chatbot:
             choices = resp.get("choices")
             if not choices:
                 continue
-            delta = choices[0].get("delta")
-            if not delta:
-                continue
-            if "role" in delta:
-                response_role = delta["role"]
-            if "content" in delta:
-                content = delta["content"]
-                full_response += content
-                yield content
-        self.add_to_conversation(full_response, response_role, convo_id=convo_id)
+            for choice in choices:
+                delta = choice.get("delta")
+                if not delta:
+                    continue
+                if "role" in delta:
+                    response_role = delta["role"]
+                if "content" in delta:
+                    content = delta["content"]
+                    full_response[choice.get("index")] += content
+                    if self.reply_count == 1:
+                        yield content
+
+        if self.reply_count > 1:
+            yield str(full_response)
+        self.add_to_conversation(str(full_response), response_role, convo_id=convo_id)
 
     async def ask_stream_async(
         self,
@@ -286,6 +298,12 @@ class Chatbot:
         self.add_to_conversation(prompt, "user", convo_id=convo_id)
         self.__truncate_conversation(convo_id=convo_id)
         # Get response
+        if self.reply_count > 1:
+            full_response: dict = {}
+            for i in range(self.reply_count):
+                full_response[i] = ""
+        else:
+            full_response: str = ""
         async with self.aclient.stream(
             "post",
             os.environ.get("API_URL") or "https://api.openai.com/v1/chat/completions",
@@ -321,7 +339,8 @@ class Chatbot:
                 )
 
             response_role: str = ""
-            full_response: str = ""
+
+            print('Hooked up to stream B')
             async for line in response.aiter_lines():
                 line = line.strip()
                 if not line:
@@ -334,18 +353,18 @@ class Chatbot:
                 if "error" in resp:
                     raise t.ResponseError(f"{resp['error']}")
                 choices = resp.get("choices")
-                if not choices:
-                    continue
-                delta: dict[str, str] = choices[0].get("delta")
-                if not delta:
-                    continue
-                if "role" in delta:
-                    response_role = delta["role"]
-                if "content" in delta:
-                    content: str = delta["content"]
-                    full_response += content
-                    yield content
-        self.add_to_conversation(full_response, response_role, convo_id=convo_id)
+                for choice in choices:
+                    delta = choice.get("delta")
+                    if not delta:
+                        continue
+                    if "role" in delta:
+                        response_role = delta["role"]
+                    if "content" in delta:
+                        content = delta["content"]
+                        full_response[choice.get("index")] += content
+                        yield content
+            print(full_response)
+        self.add_to_conversation(str(full_response), response_role, convo_id=convo_id)
 
     async def ask_async(
         self,
@@ -388,6 +407,8 @@ class Chatbot:
             pass_history=pass_history,
             **kwargs,
         )
+
+        print(type(response))
         full_response: str = "".join(response)
         return full_response
 
