@@ -197,7 +197,6 @@ class Chatbot:
         self.add_to_conversation(prompt, "user", convo_id=convo_id)
         self.__truncate_conversation(convo_id=convo_id)
         # Get response
-        full_response = None
         if self.reply_count > 1:
             full_response = {}
             for i in range(self.reply_count):
