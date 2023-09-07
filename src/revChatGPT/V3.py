@@ -272,11 +272,12 @@ class Chatbot:
                     response_role = delta["role"]
                 if "content" in delta:
                     content = delta["content"]
-                    full_response[choice.get("index")] += content
                     if self.reply_count == 1:
                         yield content
-        for i in range(self.reply_count):
-            if full_response[i]:
+                    else:
+                        full_response[choice.get("index")] += content
+        if self.reply_count > 1:
+            for i in range(self.reply_count):
                 yield full_response[i]
         self.add_to_conversation(str(full_response), response_role, convo_id=convo_id)
 
@@ -405,9 +406,12 @@ class Chatbot:
             pass_history=pass_history,
             **kwargs,
         )
-        full_response = []
-        for r in response:
-            full_response.append(r)
+        if self.reply_count > 1:
+            full_response = []
+            for r in response:
+                full_response.append(r)
+        else:
+            full_response = "".join([r for r in response])
         return full_response
 
     def rollback(self, n: int = 1, convo_id: str = "default") -> None:
