@@ -275,9 +275,9 @@ class Chatbot:
                     full_response[choice.get("index")] += content
                     if self.reply_count == 1:
                         yield content
-
-        if self.reply_count > 1:
-            yield str(full_response)
+        for i in range(self.reply_count):
+            if full_response[i]:
+                yield full_response[i]
         self.add_to_conversation(str(full_response), response_role, convo_id=convo_id)
 
     async def ask_stream_async(
@@ -340,7 +340,6 @@ class Chatbot:
 
             response_role: str = ""
 
-            print('Hooked up to stream B')
             async for line in response.aiter_lines():
                 line = line.strip()
                 if not line:
@@ -363,7 +362,6 @@ class Chatbot:
                         content = delta["content"]
                         full_response[choice.get("index")] += content
                         yield content
-            print(full_response)
         self.add_to_conversation(str(full_response), response_role, convo_id=convo_id)
 
     async def ask_async(
@@ -407,9 +405,9 @@ class Chatbot:
             pass_history=pass_history,
             **kwargs,
         )
-
-        print(type(response))
-        full_response: str = "".join(response)
+        full_response = []
+        for r in response:
+            full_response.append(r)
         return full_response
 
     def rollback(self, n: int = 1, convo_id: str = "default") -> None:
