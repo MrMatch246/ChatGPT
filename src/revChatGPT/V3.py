@@ -239,10 +239,10 @@ class Chatbot:
                 ),
                 "n": kwargs.get("n", self.reply_count),
                 "user": role,
-                "max_tokens": min(
-                    self.get_max_tokens(convo_id=convo_id),
-                    kwargs.get("max_tokens", self.max_tokens),
-                ),
+                #"max_tokens": min(
+                #    self.get_max_tokens(convo_id=convo_id),
+                #    kwargs.get("max_tokens", self.max_tokens),
+                #),
             },
             timeout=kwargs.get("timeout", self.timeout),
             stream=True,
