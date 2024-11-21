@@ -51,6 +51,7 @@ class Chatbot:
         timeout: float = None,
         max_tokens: int = None,
         temperature: float = 0.5,
+        response_format: str = {"type": "json_object"},
         top_p: float = 1.0,
         presence_penalty: float = 0.0,
         frequency_penalty: float = 0.0,
@@ -64,6 +65,7 @@ class Chatbot:
         self.engine: str = engine
         self.api_key: str = api_key
         self.system_prompt: str = system_prompt
+        self.response_format: str = response_format
         self.max_tokens: int = max_tokens or (
             31000
             if "gpt-4-32k" in engine
@@ -229,6 +231,7 @@ class Chatbot:
                 "stream": True,
                 # kwargs
                 "temperature": kwargs.get("temperature", self.temperature),
+                "response_format" : kwargs.get("response_format", self.response_format),
                 "top_p": kwargs.get("top_p", self.top_p),
                 "presence_penalty": kwargs.get(
                     "presence_penalty",
@@ -315,6 +318,7 @@ class Chatbot:
                 "stream": True,
                 # kwargs
                 "temperature": kwargs.get("temperature", self.temperature),
+                "response_format" : { "type": "json_object" },
                 "top_p": kwargs.get("top_p", self.top_p),
                 "presence_penalty": kwargs.get(
                     "presence_penalty",
